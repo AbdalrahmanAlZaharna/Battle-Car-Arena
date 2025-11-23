@@ -4,4 +4,3 @@ public interface ChecksumStrategy {
         return compute(a,b,c) == sum;
     }
 }
-	

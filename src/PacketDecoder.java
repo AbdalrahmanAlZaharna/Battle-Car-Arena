@@ -5,7 +5,7 @@ public class PacketDecoder implements Runnable {
     private final PacketParser parser;
     private final PacketBus bus;
 
-    public PacketDecoder(BlockingQueue<byte[]> inQ, PacketParser parser, PacketBus bus){
+    public PacketDecoder(BlockingQueue<byte[]> inQ, PacketParser parser, PacketBus bus) {
         this.inQ = inQ;
         this.parser = parser;
         this.bus = bus;
@@ -14,12 +14,18 @@ public class PacketDecoder implements Runnable {
     @Override
     public void run() {
         try {
-            while(true){
+            while (true) {
                 byte[] f = inQ.take();
-                parser.parse(f).ifPresent(bus::publish);
+                try {
+                    parser.parse(f).ifPresent(bus::publish);
+                } catch (Throwable t) {
+                    System.err.println("Error while decoding/publishing packet:");
+                    t.printStackTrace();
+                }
             }
-        } catch (InterruptedException e){
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            System.err.println("PacketDecoder interrupted, exiting.");
         }
     }
 }

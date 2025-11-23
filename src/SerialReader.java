@@ -11,14 +11,20 @@ public class SerialReader implements Runnable {
 
     @Override
     public void run() {
-        byte[] buf = new byte[4];
+        byte[] one = new byte[1];
+        byte[] frame = new byte[4];
+        int idx = 0;
         try {
             while(true){
-                int n = serial.read(buf);
-                if(n == 4){
-                    byte[] frame = new byte[4];
-                    System.arraycopy(buf, 0, frame, 0, 4);
-                    outQ.put(frame);
+                int n = serial.read(one);
+                if (n <= 0) continue;
+
+                frame[idx++] = one[0];
+                if (idx == 4) {
+                    byte[] out = new byte[4];
+                    System.arraycopy(frame, 0, out, 0, 4);
+                    outQ.put(out);
+                    idx = 0;
                 }
             }
         } catch (InterruptedException e){
