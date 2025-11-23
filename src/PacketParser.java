@@ -1,12 +1,23 @@
 import java.util.Optional;
 
+/**
+ * Validates raw byte arrays and converts them into Packet objects.
+ */
 public class PacketParser {
     private final ChecksumStrategy sum;
     public PacketParser(ChecksumStrategy sum){ this.sum = sum; }
 
+    /**
+     * Attempts to parse a 4-byte array.
+     * @param raw The byte array to parse.
+     * @return An Optional containing the Packet if checksum is valid, or empty if invalid.
+     */
     public Optional<Packet> parse(byte[] raw){
         if(raw == null || raw.length != 4) return Optional.empty();
+        
+        // Validate checksum integrity
         if(!sum.valid(raw[0], raw[1], raw[2], raw[3])) return Optional.empty();
+        
         int team  = raw[0] & 0xFF;
         int flags = raw[1] & 0xFF;
         int value = raw[2] & 0xFF;

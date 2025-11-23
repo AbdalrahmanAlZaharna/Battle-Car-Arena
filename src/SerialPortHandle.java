@@ -1,10 +1,11 @@
-// SerialPortHandle.java
-// JSSC-based serial wrapper: open, close, read (blocking), write, list ports.
-
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
+/**
+ * Controls the physical USB port using the JSSC library.
+ * It opens the connection and handles reading/writing bytes.
+ */
 public class SerialPortHandle implements AutoCloseable {
     private final String portName;
     private final int baud;
@@ -18,6 +19,11 @@ public class SerialPortHandle implements AutoCloseable {
         this.baud = baud;
     }
 
+    /**
+     * Connects to the USB port.
+     * Sets the speed to 9600, with 8 data bits, 1 stop bit, and no parity.
+     * These are the standard settings for Arduino XBee communication.
+     */
     public void open() {
         port = new SerialPort(portName);
         try {
@@ -37,13 +43,19 @@ public class SerialPortHandle implements AutoCloseable {
         }
     }
 
-    /** Blocking read for up to len bytes; returns number of bytes read (0..len). */
+    /**
+     * Reads data from the USB port into the provided buffer.
+     * @param buf The array where we will store the data we read.
+     * @param len The maximum number of bytes to read.
+     * @return The actual number of bytes we read (0 if nothing was there).
+     */
     public int read(byte[] buf, int len) {
         if (port == null) return -1;
         if (buf == null || len <= 0) return 0;
         try {
             int available = port.getInputBufferBytesCount();
             if (available <= 0) {
+                // If no data is waiting, sleep for 10ms to save CPU power
                 try { Thread.sleep(10); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                 available = port.getInputBufferBytesCount();
                 if (available <= 0) return 0;
@@ -58,6 +70,10 @@ public class SerialPortHandle implements AutoCloseable {
         }
     }
 
+    /**
+     * Sends bytes out to the USB port.
+     * @param buf The array of bytes to send.
+     */
     public synchronized void write(byte[] buf) {
         if (port == null) throw new IllegalStateException("Port not open");
         if (buf == null || buf.length == 0) return;
@@ -68,10 +84,18 @@ public class SerialPortHandle implements AutoCloseable {
         }
     }
 
+    /**
+     * Checks if the connection is currently active.
+     * @return true if connected, false if closed.
+     */
     public boolean isOpen() {
         return port != null && port.isOpened();
     }
 
+    /**
+     * Disconnects from the USB port.
+     * This allows other programs to use the port.
+     */
     @Override
     public void close() {
         if (port != null) {
@@ -82,6 +106,10 @@ public class SerialPortHandle implements AutoCloseable {
         }
     }
 
+    /**
+     * Gets a list of all available USB serial ports on the computer.
+     * @return An array of port names (e.g., "COM3", "COM4").
+     */
     public static String[] listPorts() {
         return SerialPortList.getPortNames();
     }
