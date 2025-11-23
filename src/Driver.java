@@ -50,7 +50,10 @@ public class Driver {
 
         // 3. Open Serial Port
         SerialPortHandle handle = new SerialPortHandle(portName, baud);
-        handle.open();   
+        handle.open();   // open the port only once here
+
+        // Create a SerialEndpoint that reuses the same opened handle
+        SerialEndpoint endpoint = new SerialEndpoint(handle);
 
         // 4. Initialize Components
         BlockingQueue<byte[]> inQ = new LinkedBlockingQueue<>(512);
@@ -84,7 +87,7 @@ public class Driver {
         SwingUtilities.invokeLater(() -> ui.setVisible(true));
 
         // 8. Start Background Threads
-        Thread reader = new Thread(new SerialReader(new SerialEndpoint(portName, baud), inQ), "Reader"); 
+        Thread reader = new Thread(new SerialReader(endpoint, inQ), "Reader"); 
         Thread decoder = new Thread(new PacketDecoder(inQ, parser, bus), "Decoder");
         Thread engineThread = new Thread(engine::runLoop, "Engine");
 
@@ -94,7 +97,7 @@ public class Driver {
 
         // 9. Close port when program ends
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try { handle.close(); } catch (Exception ignored) {}
+            try { endpoint.close(); } catch (Exception ignored) {}
             System.out.println("Serial port closed.");
         }));
 

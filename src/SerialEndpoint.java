@@ -12,9 +12,11 @@ public class SerialEndpoint implements AutoCloseable {
      * Constructor: Connects to the specific port (like "COM3") at a specific speed.
      * It immediately opens the connection.
      */
-    public SerialEndpoint(String name, int baud) {
-        this.handle = new SerialPortHandle(name, baud);
-        this.handle.open();
+    public SerialEndpoint(SerialPortHandle handle) {
+        if (handle == null) {
+            throw new IllegalArgumentException("handle must not be null");
+        }
+        this.handle = handle;
     }
 
     /**
